@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  user-service
+
+  Sample SAM Template for user-service
+  
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+    Handler: app.lambdaHandler
+    Runtime: nodejs14.x
+
+Resources:
+  UsersFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: users-lambda/
+      # since we have AutoPublishAlias - AWS SAM will detect when the code is deployed base don the changes to the lambda uploaded to S3
+      # SAM will create a new version of the function and also SAM will create an alias (if not exists) with the name "live"
+      # and point the alias to the new version of the function
+      AutoPublishAlias: live
+      DeploymentPreference: 
+        # new function will be deployed and will handle 10 % of the traffic for 5 minutes
+        # if none of the alarms defined below will trigger during that 5 min - the remaining 90% of traffic will be shifted to the new version of the function
+        Type: Canary10Percent5Minutes
+        # max alarm number === 10
+        Alarms:
+          - !Ref CanaryErrorsAlarm
+      Events:
+        UsersApi:
+          Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /users
+            Method: get
+  CanaryErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Lambda function canary errors
+      ComparisonOperator: GreaterThanThreshold
+      EvaluationPeriods: 2
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Period: 60
+      Statistic: Sum
+      Threshold: 0
+      Dimensions:
+        - Name: Resource
+          Value: !Sub "${UsersFunction}:live"
+        - Name: FunctionName
+          Value: !Ref UsersFunction
+        - Name: ExecutedVersion
+          Value: !GetAtt UsersFunction.Version.Version
+
+Outputs:
+  # ServerlessHttpApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  UsersApi:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/users/"
+  UsersFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt UsersFunction.Arn
+  UsersFunctionIamRole:
+    Description: "Implicit IAM Role created for Hello World function"
+    Value: !GetAtt UsersFunctionRole.Arn
