@@ -2,7 +2,7 @@ import * as cdk from '@aws-cdk/core';
 import * as s3 from '@aws-cdk/aws-s3';
 import * as iam from '@aws-cdk/aws-iam';
 import * as codeBuild from '@aws-cdk/aws-codebuild';
-import { RemovalPolicy } from '@aws-cdk/core';
+import { CfnOutput, RemovalPolicy } from '@aws-cdk/core';
 
 export class UserServicePipelineStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -22,6 +22,11 @@ export class UserServicePipelineStack extends cdk.Stack {
       ],
       // the role has to have a physical name set
       roleName: 'User-Service-Code-Build-Role',
+    });
+
+    new CfnOutput(this, "bucket", {
+      value: artifactsBucket.bucketName,
+      description: 'artifacts bucket name'
     });
 
     const buildProject = new codeBuild.Project(this, 'CodeBuildProject', {
