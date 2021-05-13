@@ -6,9 +6,14 @@ CICD Sample for lambda + SAM
 
 ```zsh
 cd infrastructure/user-service
+
 npm install
+
 npm run build
+
 # you will need to do cdk bootstrap in case this is your first cdk deployment
+cdk bootstrap
+
 cdk deploy user-service-ci-cd
 ```
 
