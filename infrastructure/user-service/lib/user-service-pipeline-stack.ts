@@ -56,7 +56,11 @@ export class UserServicePipelineStack extends cdk.Stack {
           'pre_build': {
             commands: [
               'pip3 install --upgrade aws-sam-cli',
+              'mkdir /tmp/build',
+              'mv services /tmp/build/',
+              'cd /tmp/build',
               'cd services/user-service/users-lambda',
+              'echo "Current working dir is $(pwd)"',
               'npm install'
             ]
           },
