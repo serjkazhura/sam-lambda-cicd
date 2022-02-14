@@ -8,13 +8,14 @@ phases:
       # Upgrading SAM CLI to latest version
       - pip3 install --upgrade aws-sam-cli
       # creating a permanent folder
+      - echo "Making a temp directory"
       - mkdir /tmp/build
       # copying services content to the folder
       - mv services /tmp/build/
       - cd /tmp/build
       # - sam --version
       - cd services/user-service
-      - pwd
+      - echo "Current working dir is $(pwd)"
 
   pre_build:
     commands:
